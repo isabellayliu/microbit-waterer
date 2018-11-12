@@ -1,0 +1,26 @@
+import microbit
+
+
+#===============================================================================
+# CONFIGURATION
+#===============================================================================
+
+# How long to wait between moisture readings (milliseconds).
+DELAY = 100
+# Analogue pin sensor is connected to.
+SENSOR_PIN = microbit.pin0
+
+
+#===============================================================================
+# PROGRAM
+#===============================================================================
+
+
+def main():
+    while True:
+        reading = SENSOR_PIN.read_analog()
+        microbit.display.show(str(reading))
+        microbit.sleep(DELAY)
+
+if __name__ == '__main__':
+    main()
