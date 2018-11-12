@@ -1,0 +1,135 @@
+import microbit
+
+
+#===============================================================================
+# CONFIGURATION
+#===============================================================================
+
+# How long to wait between moisture readings (milliseconds).
+DELAY = 10000
+# How long to run the pump (milliseconds).
+PUMP_DURATION = 2000
+# Digital pin pump is connected to.
+PUMP_PIN = microbit.pin8
+# Analogue pin sensor is connected to.
+SENSOR_PIN = microbit.pin0
+# Value corresponding to dry soil.
+SENSOR_THRESHOLD = 800
+
+
+#===============================================================================
+# PROGRAM
+#===============================================================================
+
+# Contruct a drop animation to show while running the water pump.
+DROP_FRAME_1 = microbit.Image(':'.join([
+    '00900',
+    '09390',
+    '93339',
+    '93339',
+    '09990',
+]))
+DROP_FRAME_2 = microbit.Image(':'.join([
+    '00900',
+    '09390',
+    '93339',
+    '99999',
+    '09990',
+]))
+DROP_FRAME_3 = microbit.Image(':'.join([
+    '00900',
+    '09390',
+    '99999',
+    '99999',
+    '09990',
+]))
+DROP_FRAME_4 = microbit.Image(':'.join([
+    '00900',
+    '09990',
+    '99999',
+    '99999',
+    '09990',
+]))
+# Show the full drop twice.
+DROP_FRAME_5 = DROP_FRAME_4
+DROP_ANIMATION = [DROP_FRAME_1, DROP_FRAME_2, DROP_FRAME_3, DROP_FRAME_4, DROP_FRAME_5]
+
+# Count the total number of times the pump has watered the soil.
+TOTAL_PUMP_RUNS = 0
+
+
+def run_watering_cycle(
+    delay=DELAY,
+    pump_duration=PUMP_DURATION,
+    threshold=SENSOR_THRESHOLD,
+    sensor=microbit.pin0,
+    pump=microbit.pin8,
+):
+    """
+    Run the watering cycle.
+
+    Press B on the micro:bit to exit the cycle.
+
+    Args:
+        delay (int): Time to wait between moisture readings (milliseconds).
+        pump_duration (int): How long to run the pump (milliseconds).
+        threshold (int): Run the water pump when the moisure sensor reads a
+            value less than this number.
+        sensor: Analogue pin sensor is connected to.
+        pump: Digital pin pump is connected to.
+    """
+    global TOTAL_PUMP_RUNS
+
+    while True:
+        if microbit.button_b.was_pressed():
+            # Exit the watering cycle when the user presses B.
+            break
+        # Take a moisture reading.
+        reading = sensor.read_analog()
+        # Display the moisture reading.
+        microbit.display.scroll(str(reading))
+        if reading < threshold:
+            # Display the watering animation in the background.
+            microbit.display.show(
+                DROP_ANIMATION,
+                delay=pump_duration // len(DROP_ANIMATION),
+                wait=False,
+            )
+            # Turn the pump on.
+            pump.write_digital(True)
+            # Run the pump.
+            microbit.sleep(pump_duration)
+            # Turn the pump off.
+            pump.write_digital(False)
+            # Increment the total number of pump runs.
+            TOTAL_PUMP_RUNS += 1
+        # Display the total number of pump runs.
+        microbit.display.scroll(str(TOTAL_PUMP_RUNS))
+        # Sleep to allow the water to disperse.
+        microbit.sleep(delay)
+
+
+def main():
+    """
+    This is the main program loop.
+
+    Turn the watering program on by pressing A. Turn it off by pressing B.
+    """
+    while True:
+        if microbit.button_a.was_pressed():
+            # Start the watering cycle.
+            run_watering_cycle(
+                delay=DELAY,
+                pump=PUMP_PIN,
+                pump_duration=PUMP_DURATION,
+                sensor=SENSOR_PIN,
+                threshold=SENSOR_THRESHOLD,
+            )
+        # Wait for user input.
+        microbit.sleep(100)
+
+
+# This is a Python convention for starting programs. It allows you to import
+# code from this module without running the main program.
+if __name__ == '__main__':
+    main()
